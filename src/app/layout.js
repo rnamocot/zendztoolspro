@@ -3,6 +3,9 @@ import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
+import AuthProvider from './contexts/AuthProvider'
+import DevAuthPanel from './contexts/DevAuthPanel'
+
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
@@ -57,13 +60,18 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className={`${inter.className} min-h-screen bg-gradient-hero`}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
+          
+          {/* Developer Panel - Only shows in development */}
+          <DevAuthPanel />
+        </AuthProvider>
         
         {/* Analytics Scripts */}
         {process.env.NODE_ENV === 'production' && (

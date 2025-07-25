@@ -7,7 +7,7 @@ import { ArrowRight, Play, Star, Users, Zap } from 'lucide-react'
 const Hero = () => {
   const stats = [
     { label: 'Active Users', value: '10K+', icon: Users },
-    { label: 'Tools Available', value: '25+', icon: Zap },
+    { label: 'Tools Available', value: '70+', icon: Zap },
     { label: 'User Rating', value: '4.9', icon: Star },
   ]
 
@@ -66,7 +66,7 @@ const Hero = () => {
           <motion.div variants={itemVariants} className="mb-6">
             <div className="inline-flex items-center space-x-2 bg-gray-100 backdrop-blur-custom rounded-full px-4 py-2 border border-gray-200">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium text-gray-700">Over 10,000 developers trust us</span>
+              <span className="text-sm font-medium text-gray-700">Trusted by 10,000+ professionals worldwide</span>
             </div>
           </motion.div>
 
@@ -75,9 +75,9 @@ const Hero = () => {
             variants={itemVariants}
             className="heading-1 text-gray-900 mb-6 leading-tight"
           >
-            Professional{' '}
+            All-in-One{' '}
             <span className="relative inline-block">
-              <span className="relative z-10">Developer Tools</span>
+              <span className="relative z-10">Professional Tools</span>
               <motion.div
                 className="absolute inset-0 bg-yellow-100 -rotate-1 rounded-lg"
                 initial={{ scaleX: 0 }}
@@ -86,7 +86,7 @@ const Hero = () => {
               ></motion.div>
             </span>
             <br />
-            for Modern Teams
+            for Everyone
           </motion.h1>
 
           {/* Subtitle */}
@@ -94,8 +94,8 @@ const Hero = () => {
             variants={itemVariants}
             className="text-xl sm:text-2xl text-gray-600 mb-8 leading-relaxed max-w-3xl mx-auto"
           >
-            Everything you need for development, SEO, and productivity in one place. 
-            Start free, upgrade when you need more power.
+            Essential tools for <strong>SEO specialists</strong>, <strong>developers</strong>, <strong>marketers</strong>, <strong>designers</strong>, and <strong>advertisers</strong>. 
+            Everything you need in one powerful platform.
           </motion.p>
 
           {/* CTA Buttons */}

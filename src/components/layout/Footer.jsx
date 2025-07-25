@@ -21,11 +21,11 @@ const Footer = () => {
     {
       title: 'Resources',
       links: [
-        { name: 'API Documentation', href: '/docs' },
-        { name: 'Tutorials', href: '/tutorials' },
+        { name: 'How to Use', href: '/guides' },
+        { name: 'Tips & Tricks', href: '/tips' },
         { name: 'Blog', href: '/blog' },
         { name: 'Changelog', href: '/changelog' },
-        { name: 'Status Page', href: '/status' },
+        { name: 'Tool Requests', href: '/requests' },
       ],
     },
     {
@@ -55,7 +55,7 @@ const Footer = () => {
     'QR Code Generator',
     'Hash Generator',
     'Base64 Encoder',
-    'UUID Generator'
+    'Meta Tag Generator'
   ]
 
   return (
@@ -75,8 +75,8 @@ const Footer = () => {
         </Link>
 
         <p className="text-gray-500 mb-6 leading-relaxed max-w-md">
-          Professional developer tools for modern teams. Start free with essential tools, 
-          upgrade to Pro for advanced features and unlimited usage.
+          All-in-one browser-based tools for SEO specialists, developers, marketers, designers, and advertisers. 
+          Start free with essential features, upgrade to Pro for unlimited usage and advanced options.
         </p>
 
         <div className="mb-6">
@@ -143,7 +143,7 @@ const Footer = () => {
         <div className="flex items-center space-x-1 text-sm text-gray-500">
           <span>© {currentYear} Zendz Tools. Made with</span>
           <Heart className="w-4 h-4 text-red-500 fill-current" />
-          <span>for developers worldwide.</span>
+          <span>for professionals worldwide.</span>
         </div>
         <div className="flex items-center space-x-6 text-sm text-gray-500">
           <Link href="/privacy" className="hover:text-primary-500">Privacy</Link>

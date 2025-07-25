@@ -14,7 +14,9 @@ import {
   Headphones,
   Code,
   BarChart3,
-  Settings
+  Settings,
+  Palette,
+  Download
 } from 'lucide-react'
 
 const PricingSection = () => {
@@ -28,17 +30,18 @@ const PricingSection = () => {
       icon: Star,
       color: 'from-gray-500 to-gray-600',
       features: [
-        '15+ essential tools',
+        '25+ essential tools',
         'Basic functionality',
-        '10 operations per hour',
+        'Limited usage per day',
+        'Standard features only',
         'Community support',
-        'Personal use only',
-        'Browser-based processing'
+        'Personal use',
+        'Basic export options'
       ],
       limitations: [
-        'Limited operations',
-        'No API access',
-        'No advanced features'
+        'Usage limits per tool',
+        'Basic features only',
+        'No premium options'
       ],
       cta: 'Get Started',
       ctaStyle: 'btn-secondary',
@@ -46,52 +49,30 @@ const PricingSection = () => {
     },
     {
       name: 'Pro',
-      price: { monthly: 9, annual: 89 },
-      description: 'For professionals and growing teams',
+      price: { monthly: 2, annual: 18 },
+      description: 'For professionals and power users',
       icon: Zap,
       color: 'from-primary-500 to-primary-600',
       features: [
         'Everything in Free',
         '25+ professional tools',
-        'Unlimited operations',
-        'Advanced features',
+        'Unlimited usage',
+        'All advanced features',
+        'Premium options',
+        'Custom colors & styles',
         'Batch processing',
-        'API access',
         'Priority email support',
         'Commercial use',
-        'Export capabilities',
-        'Custom templates',
-        'Usage analytics'
+        'All export formats',
+        'No watermarks',
+        'Advanced settings',
+        'Premium templates'
       ],
       limitations: [],
       cta: 'Start Pro Trial',
       ctaStyle: 'btn-primary',
       popular: true,
       badge: 'Most Popular'
-    },
-    {
-      name: 'Teams',
-      price: { monthly: 19, annual: 189 },
-      description: 'For larger teams and organizations',
-      icon: Users,
-      color: 'from-secondary-500 to-secondary-600',
-      features: [
-        'Everything in Pro',
-        'Team collaboration',
-        'Shared templates',
-        'Team analytics',
-        'Admin dashboard',
-        'SSO integration',
-        'Custom branding',
-        'Advanced security',
-        'Dedicated support',
-        'Training sessions',
-        'Custom integrations'
-      ],
-      limitations: [],
-      cta: 'Contact Sales',
-      ctaStyle: 'btn-secondary',
-      popular: false
     }
   ]
 
@@ -116,24 +97,24 @@ const PricingSection = () => {
 
   const additionalFeatures = [
     {
-      icon: Shield,
-      title: 'Enterprise Security',
-      description: 'SOC 2 compliant with advanced security features'
+      icon: Infinity,
+      title: 'Unlimited Usage',
+      description: 'No daily limits on any tools with Pro subscription'
     },
     {
-      icon: Globe,
-      title: 'Global CDN',
-      description: 'Fast loading times worldwide with our global network'
+      icon: Palette,
+      title: 'Premium Features',
+      description: 'Access to advanced options and customization'
     },
     {
-      icon: Code,
-      title: 'API Access',
-      description: 'Integrate our tools into your workflows with REST API'
+      icon: Download,
+      title: 'All Export Formats',
+      description: 'Download in any format without restrictions'
     },
     {
-      icon: BarChart3,
-      title: 'Analytics Dashboard',
-      description: 'Track usage, performance, and team productivity'
+      icon: Settings,
+      title: 'Advanced Options',
+      description: 'Fine-tune settings for professional results'
     }
   ]
 
@@ -178,7 +159,7 @@ const PricingSection = () => {
               >
                 Annual
                 <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">
-                  Save 17%
+                  Save 25%
                 </span>
               </button>
             </div>
@@ -186,7 +167,7 @@ const PricingSection = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20 items-stretch">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
@@ -194,7 +175,7 @@ const PricingSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`card card-hover relative ${
+              className={`card card-hover relative flex flex-col h-full ${
                 plan.popular ? 'ring-2 ring-primary-500 scale-105' : ''
               }`}
             >
@@ -242,7 +223,7 @@ const PricingSection = () => {
               </div>
 
               {/* Features */}
-              <div className="mb-8">
+              <div className="mb-8 flex-grow">
                 <ul className="space-y-4">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start space-x-3">
@@ -254,9 +235,11 @@ const PricingSection = () => {
               </div>
 
               {/* CTA Button */}
-              <button className={`btn ${plan.ctaStyle} w-full`}>
-                {plan.cta}
-              </button>
+              <div className="mt-auto">
+                <button className={`btn ${plan.ctaStyle} w-full`}>
+                  {plan.cta}
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -271,11 +254,11 @@ const PricingSection = () => {
         >
           <div className="text-center mb-12">
             <h3 className="heading-3 text-gray-900 mb-4">
-              Everything You Need to Scale
+              Why Upgrade to Pro?
             </h3>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Pro and Teams plans include powerful features designed for 
-              professional workflows and team collaboration.
+              Pro removes all limitations and unlocks advanced features 
+              for professional workflows and enhanced productivity.
             </p>
           </div>
 
