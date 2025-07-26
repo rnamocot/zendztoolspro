@@ -22,15 +22,6 @@ import {
 } from 'lucide-react'
 
 const PasswordGeneratorTool = () => {
-  // Real auth integration
-  const { 
-    user, 
-    isSignedIn,
-    updateUsage, 
-    canUseTool, 
-    getRemainingUsage 
-  } = useAuth()
-
   const [password, setPassword] = useState('')
   const [length, setLength] = useState(12)
   const [includeUppercase, setIncludeUppercase] = useState(true)
@@ -43,20 +34,18 @@ const PasswordGeneratorTool = () => {
   const [copySuccess, setCopySuccess] = useState(false)
   const [strength, setStrength] = useState({ score: 0, label: '', color: '' })
   const [generatedPasswords, setGeneratedPasswords] = useState([])
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [usageCount, setUsageCount] = useState(0)
 
-  // Tool configuration
-  const TOOL_ID = 'password-generator'
   const FREE_USAGE_LIMIT = 20
-
-  // Real usage data from auth context
-  const currentUsage = user?.usageToday?.[TOOL_ID] || 0
-  const usageRemaining = getRemainingUsage(TOOL_ID, FREE_USAGE_LIMIT)
-  const canUse = canUseTool(TOOL_ID, FREE_USAGE_LIMIT)
-  const isNearLimit = typeof usageRemaining === 'number' && usageRemaining <= 2
-  const isAtLimit = !canUse && isSignedIn
+  const isPro = false // This would come from user auth context
 
   useEffect(() => {
+    // Load usage count from localStorage
+    const savedUsage = localStorage.getItem('password-generator-usage')
+    if (savedUsage) {
+      setUsageCount(parseInt(savedUsage))
+    }
+    
     // Generate initial password
     generatePassword()
   }, [])
@@ -67,6 +56,13 @@ const PasswordGeneratorTool = () => {
     }
   }, [password])
 
+  const updateUsageCount = () => {
+    if (!isPro) {
+      const newCount = usageCount + 1
+      setUsageCount(newCount)
+      localStorage.setItem('password-generator-usage', newCount.toString())
+    }
+  }
 
   const calculateStrength = (pwd) => {
     let score = 0
@@ -113,9 +109,7 @@ const PasswordGeneratorTool = () => {
   }
 
   const generatePassword = () => {
-    // Check if user can use this tool
-    if (!canUse) {
-      setShowUpgradePrompt(true)
+    if (!isPro && usageCount >= FREE_USAGE_LIMIT) {
       return
     }
 
@@ -141,13 +135,11 @@ const PasswordGeneratorTool = () => {
     }
 
     setPassword(result)
-    
-    // Update usage count (this will work for both signed in and anonymous users)
-    updateUsage(TOOL_ID)
+    updateUsageCount()
   }
 
   const generateBulkPasswords = (count) => {
-    if (!user?.isPro) return
+    if (!isPro) return
 
     const passwords = []
     for (let i = 0; i < count; i++) {
@@ -192,44 +184,11 @@ const PasswordGeneratorTool = () => {
     URL.revokeObjectURL(url)
   }
 
-  const renderUsageStatus = () => {
-    if (!isSignedIn) {
-      return (
-        <div className="inline-flex items-center bg-blue-100 rounded-lg px-4 py-2">
-          <Info className="w-4 h-4 mr-2 text-blue-600" />
-          <span className="text-sm text-blue-800">
-            Try it out • <Link href="/auth/signup" className="underline">Sign up</Link> for daily limits
-          </span>
-        </div>
-      )
-    }
-
-    if (user?.isPro) {
-      return (
-        <div className="inline-flex items-center bg-green-100 rounded-lg px-4 py-2">
-          <Crown className="w-4 h-4 mr-2 text-green-600" />
-          <span className="text-sm text-green-800 font-medium">
-            Unlimited passwords • Pro Plan
-          </span>
-        </div>
-      )
-    }
-
-    return (
-      <div className={`inline-flex items-center rounded-lg px-4 py-2 ${
-        isNearLimit ? 'bg-orange-100' : 'bg-slate-100'
-      }`}>
-        <Info className={`w-4 h-4 mr-2 ${isNearLimit ? 'text-orange-500' : 'text-slate-500'}`} />
-        <span className={`text-sm ${isNearLimit ? 'text-orange-800' : 'text-slate-600'}`}>
-          Usage: <span className={isNearLimit ? 'text-orange-600 font-bold' : 'text-slate-900 font-medium'}>
-            {currentUsage}/{FREE_USAGE_LIMIT}
-          </span> passwords today
-          {isNearLimit && (
-            <span className="ml-2 text-orange-600">• Almost at limit!</span>
-          )}
-        </span>
-      </div>
-    )
+  const getUsageColor = () => {
+    const percentage = (usageCount / FREE_USAGE_LIMIT) * 100
+    if (percentage >= 90) return 'text-red-600'
+    if (percentage >= 70) return 'text-orange-600'
+    return 'text-green-600'
   }
 
   const presets = [
@@ -246,7 +205,6 @@ const PasswordGeneratorTool = () => {
     setIncludeNumbers(preset.numbers)
     setIncludeSymbols(preset.symbols)
   }
-
   return (
     <div className="min-h-screen pt-20">
       <div className="container-custom py-8">
@@ -270,78 +228,27 @@ const PasswordGeneratorTool = () => {
               Generate secure, random passwords with customizable options. Perfect for creating strong passwords for your accounts.
             </p>
             
-            {/* Usage Counter */}
-            <div className="mb-4">
-              {renderUsageStatus()}
-            </div>
+            {/* Usage Counter for Free Users */}
+            {!isPro && (
+              <div className="inline-flex items-center bg-slate-100 rounded-lg px-4 py-2 mb-4">
+                <Info className="w-4 h-4 mr-2 text-slate-500" />
+                <span className="text-sm text-slate-600">
+                  Usage: <span className={getUsageColor()}>{usageCount}/{FREE_USAGE_LIMIT}</span> passwords today
+                </span>
+              </div>
+            )}
           </div>
 
-          {!user?.isPro && (
+          {!isPro && (
             <Link
               href="/pricing"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+              className="btn btn-pro"
             >
               <Crown className="w-4 h-4 mr-2" />
               Upgrade to Pro
             </Link>
           )}
         </div>
-
-        {/* At Limit Warning */}
-        {isAtLimit && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
-            <div className="flex items-start space-x-3">
-              <AlertTriangle className="w-6 h-6 text-red-500 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-red-800 font-semibold mb-2">Daily Limit Reached</h3>
-                <p className="text-red-700 mb-4">
-                  You've used all {FREE_USAGE_LIMIT} passwords for today. Upgrade to Pro for unlimited usage.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href="/pricing" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Pro - $1.50/month
-                  </Link>
-                  <Link href="/dashboard" className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                    View Dashboard
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Upgrade Prompt Modal */}
-        {showUpgradePrompt && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Daily Limit Reached</h3>
-              <p className="text-slate-600 mb-4">
-                {isSignedIn 
-                  ? `You've used all ${FREE_USAGE_LIMIT} passwords for today.`
-                  : `Sign up to get ${FREE_USAGE_LIMIT} daily passwords, or upgrade to Pro for unlimited usage.`
-                }
-              </p>
-              <div className="flex flex-col gap-3">
-                {!isSignedIn && (
-                  <Link href="/auth/signup" className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                    Sign Up for Free
-                  </Link>
-                )}
-                <Link href="/pricing" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade to Pro
-                </Link>
-                <button 
-                  onClick={() => setShowUpgradePrompt(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Settings Panel */}
@@ -458,22 +365,22 @@ const PasswordGeneratorTool = () => {
               {/* Generate Button */}
               <button
                 onClick={generatePassword}
-                disabled={isAtLimit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                disabled={!isPro && usageCount >= FREE_USAGE_LIMIT}
+                className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {isAtLimit ? 'Daily Limit Reached' : 'Generate Password'}
+                Generate Password
               </button>
               
-              {isAtLimit && (
+              {!isPro && usageCount >= FREE_USAGE_LIMIT && (
                 <p className="text-sm text-red-600 mt-2 text-center">
-                  <Link href="/pricing" className="underline">Upgrade to Pro</Link> for unlimited usage
+                  Free limit reached. <Link href="/pricing" className="underline">Upgrade to Pro</Link>
                 </p>
               )}
             </div>
 
             {/* Pro Features */}
-            {user?.isPro && (
+            {isPro && (
               <div className="bg-white rounded-2xl p-6 border border-slate-200">
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Bulk Generation</h3>
                 <div className="space-y-3">
@@ -631,7 +538,7 @@ const PasswordGeneratorTool = () => {
             )}
 
             {/* Pro Features Callout */}
-            {!user?.isPro && (
+            {!isPro && (
               <div className="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl p-6">
                 <div className="flex items-start">
                   <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mr-4">
