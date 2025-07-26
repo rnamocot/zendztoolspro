@@ -55,29 +55,78 @@ const Dashboard = () => {
 
   if (isLoading || !user) return null
 
+  // Tool limits mapping - should match the actual tool limits
+  const toolLimits = {
+    'qr-generator': 15,
+    'json-formatter': 20,
+    'password-generator': 25,
+    'hash-generator': 15,
+    'base64-encoder': 15,
+    'meta-tags': 10,
+    'robots-txt': 12,
+    'xml-sitemap': 5,
+    'keyword-density': 15,
+    'schema-generator': 10,
+    'serp-preview': 20,
+    'canonical-url-generator': 15,
+    'hreflang-generator': 12
+  }
+
   const usageData = {
     today: Object.entries(user.usageToday || {}).reduce((acc, [tool, count]) => {
-      acc[tool] = { used: count, limit: 10 }
+      acc[tool] = { used: count, limit: toolLimits[tool] || 10 }
       return acc
     }, {}),
     thisMonth: user.usageThisMonth || {
       totalUsage: 0,
-      toolsUsed: 0,
-      favoriteCategory: 'None'
+      toolsUsed: Object.keys(user.usageToday || {}).length,
+      favoriteCategory: 'Developer Tools'
     }
   }
 
-  const recentTools = [
-    { name: 'QR Code Generator', href: '/tools/qr-generator', icon: QrCode, lastUsed: '2 hours ago', category: 'Marketing' },
-    { name: 'JSON Formatter', href: '/tools/json-formatter', icon: Code2, lastUsed: '4 hours ago', category: 'Developer' },
-    { name: 'Password Generator', href: '/tools/password-generator', icon: Key, lastUsed: '1 day ago', category: 'Security' },
-    { name: 'Hash Generator', href: '/tools/hash-generator', icon: Hash, lastUsed: '2 days ago', category: 'Security' }
+  // Tool metadata for recently used tools
+  const toolMetadata = {
+    'qr-generator': { name: 'QR Code Generator', href: '/tools/qr-generator', icon: QrCode, category: 'Marketing' },
+    'json-formatter': { name: 'JSON Formatter', href: '/tools/json-formatter', icon: Code2, category: 'Developer' },
+    'password-generator': { name: 'Password Generator', href: '/tools/password-generator', icon: Key, category: 'Security' },
+    'hash-generator': { name: 'Hash Generator', href: '/tools/hash-generator', icon: Hash, category: 'Security' },
+    'base64-encoder': { name: 'Base64 Encoder', href: '/tools/base64-encoder', icon: FileText, category: 'Developer' },
+    'meta-tags': { name: 'Meta Tags Generator', href: '/tools/meta-tags', icon: Tag, category: 'SEO' },
+    'robots-txt': { name: 'Robots.txt Generator', href: '/tools/robots-txt', icon: Shield, category: 'SEO' },
+    'xml-sitemap': { name: 'XML Sitemap Generator', href: '/tools/xml-sitemap', icon: Database, category: 'SEO' },
+    'keyword-density': { name: 'Keyword Density Checker', href: '/tools/keyword-density', icon: Search, category: 'SEO' },
+    'schema-generator': { name: 'Schema Markup Generator', href: '/tools/schema-generator', icon: Database, category: 'SEO' },
+    'serp-preview': { name: 'SERP Preview Tool', href: '/tools/serp-preview', icon: Eye, category: 'SEO' },
+    'canonical-url-generator': { name: 'Canonical URL Generator', href: '/tools/canonical-url', icon: Database, category: 'SEO' },
+    'hreflang-generator': { name: 'Hreflang Generator', href: '/tools/hreflang-generator', icon: Database, category: 'SEO' }
+  }
+
+  // Generate recently used tools from actual usage data
+  const recentTools = Object.entries(user.usageToday || {})
+    .filter(([toolId, count]) => count > 0 && toolMetadata[toolId])
+    .sort(([,a], [,b]) => b - a) // Sort by usage count descending
+    .slice(0, 4) // Take top 4
+    .map(([toolId, count]) => ({
+      ...toolMetadata[toolId],
+      lastUsed: count === 1 ? '1 use today' : `${count} uses today`
+    }))
+
+  // Fallback to default tools if no usage data
+  const defaultRecentTools = [
+    { name: 'QR Code Generator', href: '/tools/qr-generator', icon: QrCode, lastUsed: 'Try it out', category: 'Marketing' },
+    { name: 'JSON Formatter', href: '/tools/json-formatter', icon: Code2, lastUsed: 'Try it out', category: 'Developer' },
+    { name: 'Password Generator', href: '/tools/password-generator', icon: Key, lastUsed: 'Try it out', category: 'Security' },
+    { name: 'Meta Tags Generator', href: '/tools/meta-tags', icon: Tag, lastUsed: 'Try it out', category: 'SEO' }
   ]
 
+  const displayRecentTools = recentTools.length > 0 ? recentTools : defaultRecentTools
+
+  // Popular/recommended tools for favorites section
   const favoriteTools = [
-    { name: 'Meta Tag Generator', href: '/tools/meta-tags', icon: Tag, category: 'SEO' },
+    { name: 'Meta Tags Generator', href: '/tools/meta-tags', icon: Tag, category: 'SEO' },
     { name: 'Base64 Encoder', href: '/tools/base64-encoder', icon: FileText, category: 'Developer' },
-    { name: 'Color Palette Generator', href: '/tools/color-palette', icon: Palette, category: 'Design' }
+    { name: 'QR Code Generator', href: '/tools/qr-generator', icon: QrCode, category: 'Marketing' },
+    { name: 'JSON Formatter', href: '/tools/json-formatter', icon: Code2, category: 'Developer' }
   ]
 
   const toolCategories = [
@@ -290,7 +339,7 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-3">
-                {recentTools.map((tool, index) => (
+                {displayRecentTools.map((tool, index) => (
                   <Link
                     key={index}
                     href={tool.href}

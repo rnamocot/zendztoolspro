@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/app/contexts/AuthProvider'
 import { 
   Copy, 
   Download, 
@@ -19,17 +20,27 @@ import {
 } from 'lucide-react'
 
 const JsonFormatterTool = () => {
+  // Real auth integration
+  const { 
+    user, 
+    isSignedIn,
+    updateUsage, 
+    canUseTool, 
+    getRemainingUsage 
+  } = useAuth()
+
   const [inputJson, setInputJson] = useState('')
   const [outputJson, setOutputJson] = useState('')
   const [error, setError] = useState('')
   const [isValid, setIsValid] = useState(null)
-  const [usageCount, setUsageCount] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const [indentSize, setIndentSize] = useState(2)
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
 
-  const FREE_USAGE_LIMIT = 10
-  const isPro = false // This would come from user auth context
+  // Tool configuration
+  const TOOL_ID = 'json-formatter'
+  const FREE_USAGE_LIMIT = 20
 
   // Sample JSON for demo
   const sampleJson = `{
@@ -44,25 +55,16 @@ const JsonFormatterTool = () => {
   "hobbies": ["reading", "coding", "gaming"]
 }`
 
-  useEffect(() => {
-    // Load usage count from localStorage (in real app, this would be from backend)
-    const savedUsage = localStorage.getItem('json-formatter-usage')
-    if (savedUsage) {
-      setUsageCount(parseInt(savedUsage))
-    }
-  }, [])
-
-  const updateUsageCount = () => {
-    if (!isPro) {
-      const newCount = usageCount + 1
-      setUsageCount(newCount)
-      localStorage.setItem('json-formatter-usage', newCount.toString())
-    }
-  }
+  // Real usage data from auth context
+  const currentUsage = user?.usageToday?.[TOOL_ID] || 0
+  const usageRemaining = getRemainingUsage(TOOL_ID, FREE_USAGE_LIMIT)
+  const canUse = canUseTool(TOOL_ID, FREE_USAGE_LIMIT)
+  const isNearLimit = typeof usageRemaining === 'number' && usageRemaining <= 3
+  const isAtLimit = !canUse && isSignedIn
 
   const formatJson = (pretty = true) => {
-    if (!isPro && usageCount >= FREE_USAGE_LIMIT) {
-      setError('Free usage limit reached. Upgrade to Pro for unlimited formatting.')
+    if (!canUse) {
+      setShowUpgradePrompt(true)
       return
     }
 
@@ -82,7 +84,9 @@ const JsonFormatterTool = () => {
       
       setOutputJson(formatted)
       setIsValid(true)
-      updateUsageCount()
+      
+      // Update usage count
+      updateUsage(TOOL_ID)
       
       setTimeout(() => setIsProcessing(false), 300)
     } catch (err) {
@@ -135,8 +139,8 @@ const JsonFormatterTool = () => {
     const file = event.target.files[0]
     if (!file) return
 
-    if (!isPro && usageCount >= FREE_USAGE_LIMIT) {
-      setError('Free usage limit reached. Upgrade to Pro for file uploads.')
+    if (!user?.isPro && file.size > 100000) { // 100KB limit for free users
+      setError('File too large. Free users can upload files up to 100KB. Upgrade to Pro for larger files.')
       return
     }
 
@@ -161,11 +165,44 @@ const JsonFormatterTool = () => {
     setIsValid(null)
   }
 
-  const getUsageColor = () => {
-    const percentage = (usageCount / FREE_USAGE_LIMIT) * 100
-    if (percentage >= 90) return 'text-red-600'
-    if (percentage >= 70) return 'text-orange-600'
-    return 'text-green-600'
+  const renderUsageStatus = () => {
+    if (!isSignedIn) {
+      return (
+        <div className="inline-flex items-center bg-blue-100 rounded-lg px-4 py-2">
+          <Info className="w-4 h-4 mr-2 text-blue-600" />
+          <span className="text-sm text-blue-800">
+            Try it out • <Link href="/auth/signup" className="underline">Sign up</Link> for daily limits
+          </span>
+        </div>
+      )
+    }
+
+    if (user?.isPro) {
+      return (
+        <div className="inline-flex items-center bg-green-100 rounded-lg px-4 py-2">
+          <Crown className="w-4 h-4 mr-2 text-green-600" />
+          <span className="text-sm text-green-800 font-medium">
+            Unlimited formatting • Schema validation • Pro Plan
+          </span>
+        </div>
+      )
+    }
+
+    return (
+      <div className={`inline-flex items-center rounded-lg px-4 py-2 ${
+        isNearLimit ? 'bg-orange-100' : 'bg-slate-100'
+      }`}>
+        <Info className={`w-4 h-4 mr-2 ${isNearLimit ? 'text-orange-500' : 'text-slate-500'}`} />
+        <span className={`text-sm ${isNearLimit ? 'text-orange-800' : 'text-slate-600'}`}>
+          Usage: <span className={isNearLimit ? 'text-orange-600 font-bold' : 'text-slate-900 font-medium'}>
+            {currentUsage}/{FREE_USAGE_LIMIT}
+          </span> operations today
+          {isNearLimit && (
+            <span className="ml-2 text-orange-600">• Almost at limit!</span>
+          )}
+        </span>
+      </div>
+    )
   }
 
   return (
@@ -191,27 +228,78 @@ const JsonFormatterTool = () => {
               Format, validate, and minify JSON data with syntax highlighting and error detection.
             </p>
             
-            {/* Usage Counter for Free Users */}
-            {!isPro && (
-              <div className="inline-flex items-center bg-slate-100 rounded-lg px-4 py-2 mb-4">
-                <Info className="w-4 h-4 mr-2 text-slate-500" />
-                <span className="text-sm text-slate-600">
-                  Usage: <span className={getUsageColor()}>{usageCount}/{FREE_USAGE_LIMIT}</span> operations today
-                </span>
-              </div>
-            )}
+            {/* Usage Counter */}
+            <div className="mb-4">
+              {renderUsageStatus()}
+            </div>
           </div>
 
-          {!isPro && (
+          {!user?.isPro && (
             <Link
               href="/pricing"
-              className="btn btn-pro"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
             >
               <Crown className="w-4 h-4 mr-2" />
               Upgrade to Pro
             </Link>
           )}
         </div>
+
+        {/* At Limit Warning */}
+        {isAtLimit && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-6 h-6 text-red-500 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-red-800 font-semibold mb-2">Daily Limit Reached</h3>
+                <p className="text-red-700 mb-4">
+                  You've used all {FREE_USAGE_LIMIT} JSON formatting operations for today. Upgrade to Pro for unlimited usage and advanced features.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/pricing" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade to Pro - $1.50/month
+                  </Link>
+                  <Link href="/dashboard" className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    View Dashboard
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade Prompt Modal */}
+        {showUpgradePrompt && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Upgrade Required</h3>
+              <p className="text-slate-600 mb-4">
+                {isSignedIn 
+                  ? `You've reached the daily limit of ${FREE_USAGE_LIMIT} JSON formatting operations.`
+                  : `Sign up to get ${FREE_USAGE_LIMIT} daily JSON formatting operations, or upgrade to Pro for unlimited usage.`
+                }
+              </p>
+              <div className="flex flex-col gap-3">
+                {!isSignedIn && (
+                  <Link href="/auth/signup" className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Sign Up for Free
+                  </Link>
+                )}
+                <Link href="/pricing" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade to Pro
+                </Link>
+                <button 
+                  onClick={() => setShowUpgradePrompt(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Features Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -307,8 +395,8 @@ const JsonFormatterTool = () => {
               
               <button
                 onClick={() => formatJson(true)}
-                disabled={isProcessing || (!isPro && usageCount >= FREE_USAGE_LIMIT)}
-                className="btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing || isAtLimit}
+                className="px-3 py-1.5 bg-sky-600 text-white rounded hover:bg-sky-700 transition-colors text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
@@ -320,8 +408,8 @@ const JsonFormatterTool = () => {
               
               <button
                 onClick={() => formatJson(false)}
-                disabled={isProcessing || (!isPro && usageCount >= FREE_USAGE_LIMIT)}
-                className="btn btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing || isAtLimit}
+                className="px-3 py-1.5 border border-slate-300 text-slate-700 rounded hover:bg-slate-50 transition-colors text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Minimize2 className="w-4 h-4 mr-2" />
                 Minify
@@ -399,7 +487,7 @@ const JsonFormatterTool = () => {
         )}
 
         {/* Pro Features Callout */}
-        {!isPro && (
+        {!user?.isPro && (
           <div className="mt-8 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl p-6">
             <div className="flex items-start">
               <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mr-4">
@@ -428,10 +516,10 @@ const JsonFormatterTool = () => {
                 </div>
                 <Link
                   href="/pricing"
-                  className="btn btn-primary"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
                 >
                   <Zap className="w-4 h-4 mr-2" />
-                  Upgrade to Pro - $9/month
+                  Upgrade to Pro - $1.50/month
                 </Link>
               </div>
             </div>

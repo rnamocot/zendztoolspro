@@ -27,16 +27,19 @@ export const AuthProvider = ({ children }) => {
       joinDate: '2024-01-15',
       usageToday: {
         'qr-generator': 7,
-        'json-formatter': 3,
-        'password-generator': 5,
-        'hash-generator': 2,
-        'base64-encoder': 4
+        'json-formatter': 12,
+        'password-generator': 15,
+        'hash-generator': 8,
+        'base64-encoder': 6,
+        'meta-tags': 4,
+        'serp-preview': 3
       },
       usageThisMonth: {
-        totalUsage: 156,
-        toolsUsed: 12,
+        totalUsage: 189,
+        toolsUsed: 7,
         favoriteCategory: 'Developer Tools'
-      }
+      },
+      favorites: ['json-formatter', 'qr-generator', 'meta-tags']
     },
     // Pro test account - YOUR SECRET ACCOUNT
     'admin@zendztools.com': {
@@ -48,9 +51,10 @@ export const AuthProvider = ({ children }) => {
       usageToday: {}, // Unlimited, so we don't track
       usageThisMonth: {
         totalUsage: 847,
-        toolsUsed: 25,
+        toolsUsed: 13,
         favoriteCategory: 'All Categories'
       },
+      favorites: ['meta-tags', 'canonical-url-generator', 'schema-generator', 'password-generator', 'base64-encoder'],
       subscription: {
         plan: 'Pro Annual',
         status: 'active',
@@ -117,7 +121,8 @@ export const AuthProvider = ({ children }) => {
         totalUsage: 0,
         toolsUsed: 0,
         favoriteCategory: 'None'
-      }
+      },
+      favorites: []
     }
     
     setUser(newUser)
@@ -133,7 +138,10 @@ export const AuthProvider = ({ children }) => {
   }
 
   const updateUsage = (toolId) => {
-    if (!user || user.isPro) return // Pro users have unlimited usage
+    if (!user) return // No user signed in
+    
+    const wasNewTool = !user.usageToday?.[toolId]
+    const currentToolsUsed = Object.keys(user.usageToday || {}).length
     
     const updatedUser = {
       ...user,
@@ -143,7 +151,8 @@ export const AuthProvider = ({ children }) => {
       },
       usageThisMonth: {
         ...user.usageThisMonth,
-        totalUsage: user.usageThisMonth.totalUsage + 1
+        totalUsage: (user.usageThisMonth?.totalUsage || 0) + 1,
+        toolsUsed: wasNewTool ? currentToolsUsed + 1 : (user.usageThisMonth?.toolsUsed || currentToolsUsed)
       }
     }
     
@@ -186,6 +195,44 @@ export const AuthProvider = ({ children }) => {
     
     setUser(toggledUser)
     localStorage.setItem('zendztools_user', JSON.stringify(toggledUser))
+  }
+
+  const addToFavorites = (toolId) => {
+    if (!user || user.favorites?.includes(toolId)) return
+    
+    const updatedUser = {
+      ...user,
+      favorites: [...(user.favorites || []), toolId]
+    }
+    
+    setUser(updatedUser)
+    localStorage.setItem('zendztools_user', JSON.stringify(updatedUser))
+  }
+
+  const removeFromFavorites = (toolId) => {
+    if (!user || !user.favorites?.includes(toolId)) return
+    
+    const updatedUser = {
+      ...user,
+      favorites: user.favorites.filter(id => id !== toolId)
+    }
+    
+    setUser(updatedUser)
+    localStorage.setItem('zendztools_user', JSON.stringify(updatedUser))
+  }
+
+  const toggleFavorite = (toolId) => {
+    if (!user) return
+    
+    if (user.favorites?.includes(toolId)) {
+      removeFromFavorites(toolId)
+    } else {
+      addToFavorites(toolId)
+    }
+  }
+
+  const isFavorite = (toolId) => {
+    return user?.favorites?.includes(toolId) || false
   }
 
   const value = {

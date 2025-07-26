@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuth } from '@/app/contexts/AuthProvider'
 import { 
   Search, 
   Filter,
@@ -57,6 +58,9 @@ import {
 } from 'lucide-react'
 
 const ToolsLandingPage = () => {
+  // Auth context integration
+  const { user, isSignedIn } = useAuth()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedTier, setSelectedTier] = useState('all')
@@ -87,7 +91,7 @@ const ToolsLandingPage = () => {
       icon: Tag,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 95,
       features: ['Basic meta tags', 'Open Graph', 'Twitter Cards'],
       proFeatures: ['Bulk generation', 'Templates', 'Character limits'],
@@ -100,7 +104,7 @@ const ToolsLandingPage = () => {
       icon: Shield,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 88,
       features: ['Basic rules', 'Validation', 'Download'],
       proFeatures: ['Advanced directives', 'Sitemap integration', 'Bulk sites'],
@@ -113,11 +117,11 @@ const ToolsLandingPage = () => {
       icon: Globe,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 92,
       features: ['Basic sitemap', 'URL validation', 'Download XML'],
       proFeatures: ['Image sitemaps', 'Video sitemaps', 'Large sites'],
-      href: '/tools/sitemap-generator'
+      href: '/tools/xml-sitemap'
     },
     {
       id: 'keyword-density',
@@ -126,7 +130,7 @@ const ToolsLandingPage = () => {
       icon: Search,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 85,
       features: ['Basic analysis', 'Keyword count', 'Density percentage'],
       proFeatures: ['Competitor comparison', 'Bulk analysis', 'Export reports'],
@@ -139,7 +143,7 @@ const ToolsLandingPage = () => {
       icon: Database,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 90,
       features: ['Basic schemas', 'JSON-LD format', 'Copy code'],
       proFeatures: ['All schema types', 'Validation', 'Bulk generation'],
@@ -152,7 +156,7 @@ const ToolsLandingPage = () => {
       icon: Eye,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 87,
       features: ['Basic preview', 'Title & description', 'Mobile view'],
       proFeatures: ['Multiple devices', 'Competitor analysis', 'A/B testing'],
@@ -165,7 +169,7 @@ const ToolsLandingPage = () => {
       icon: LinkIcon,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 82,
       features: ['Single URLs', 'Tag generation', 'Copy code'],
       proFeatures: ['Bulk processing', 'Validation', 'Auto-detection'],
@@ -178,7 +182,7 @@ const ToolsLandingPage = () => {
       icon: Globe,
       category: 'seo',
       tier: 'freemium',
-      status: 'coming-soon',
+      status: 'available',
       popularity: 78,
       features: ['Basic hreflang', 'Language codes', 'Copy tags'],
       proFeatures: ['Bulk generation', 'Validation', 'Auto-detection'],
@@ -1224,13 +1228,24 @@ const ToolsLandingPage = () => {
             )}
           </div>
           
-          <Link
-            href="/pricing"
-            className="btn btn-pro btn-sm"
-          >
-            <Crown className="w-4 h-4 mr-2" />
-            Upgrade to Pro
-          </Link>
+          {!user?.isPro && (
+            <Link
+              href="/pricing"
+              className="btn btn-pro btn-sm"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade to Pro
+            </Link>
+          )}
+
+          {user?.isPro && (
+            <div className="inline-flex items-center bg-green-100 rounded-lg px-4 py-2">
+              <Crown className="w-4 h-4 mr-2 text-green-600" />
+              <span className="text-sm text-green-800 font-medium">
+                Pro Plan Active
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Tools Grid */}
@@ -1402,36 +1417,71 @@ const ToolsLandingPage = () => {
           </div>
         )}
 
-        {/* Pro CTA */}
-        <div className="mt-16 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Crown className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">
-              Ready for Pro Features?
-            </h3>
-            <p className="text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
-              Unlock unlimited usage, advanced features, batch processing, and premium options. 
-              Perfect for professionals who need more power.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/pricing"
-                className="btn btn-primary btn-lg"
-              >
-                <Zap className="w-5 h-5 mr-2" />
-                View Pro Features
-              </Link>
-              <Link
-                href="/pricing#faq"
-                className="btn btn-outline-dark  btn-lg"
-              >
-                Learn More
-              </Link>
+        {/* Pro CTA - Only show for non-pro users */}
+        {!user?.isPro && (
+          <div className="mt-16 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl p-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Ready for Pro Features?
+              </h3>
+              <p className="text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
+                Unlock unlimited usage, advanced features, batch processing, and premium options. 
+                Perfect for professionals who need more power.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/pricing"
+                  className="btn btn-primary btn-lg"
+                >
+                  <Zap className="w-5 h-5 mr-2" />
+                  View Pro Features
+                </Link>
+                <Link
+                  href="/pricing#faq"
+                  className="btn btn-outline-dark  btn-lg"
+                >
+                  Learn More
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Pro user appreciation section */}
+        {user?.isPro && (
+          <div className="mt-16 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Thanks for being a Pro user!
+              </h3>
+              <p className="text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
+                You have unlimited access to all tools and pro features. 
+                Enjoy the full power of our professional suite!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/dashboard"
+                  className="btn btn-primary btn-lg"
+                >
+                  <Zap className="w-5 h-5 mr-2" />
+                  View Dashboard
+                </Link>
+                <Link
+                  href="/support"
+                  className="btn btn-outline-dark btn-lg"
+                >
+                  Get Support
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
